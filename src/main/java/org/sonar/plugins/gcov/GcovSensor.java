@@ -1,4 +1,4 @@
- /*
+/*
  * sonar-coverage-ghdl plugin for Sonarqube & GHDL
  * Copyright (C) 2019 Linty Services
  * 
@@ -44,51 +44,52 @@ import java.util.List;
 
 public class GcovSensor implements Sensor {
 
-  private static final Logger LOGGER = LoggerFactory.getLogger(GcovSensor.class);
+	private static final Logger LOGGER = LoggerFactory.getLogger(GcovSensor.class);
 
-  private FileSystem fs;
+	private FileSystem fs;
 
-  private Configuration configuration;
+	private Configuration configuration;
 
-  public GcovSensor(FileSystem fs, Settings settings,
-                          Configuration configuration) {
-    this.fs = fs;
-    this.configuration=configuration;
-  }
+	public GcovSensor(FileSystem fs, Settings settings,
+			Configuration configuration) {
+		this.fs = fs;
+		this.configuration=configuration;
+	}
 
-  @Override
-  public void describe(SensorDescriptor descriptor) {
-	  descriptor.onlyOnLanguages(Vhdl.KEY,CCPP.KEY).name("GcovSensor");
-  }
+	@Override
+	public void describe(SensorDescriptor descriptor) {
+		descriptor.onlyOnLanguages(Vhdl.KEY,CCPP.KEY).name("GcovSensor");
+	}
 
-  @Override
-  public void execute(SensorContext context) {
-	  String enable=configuration.get(GcovPlugin.ENABLE_COVERAGE).orElse("false");
-	  if (!enable.toLowerCase().equals("false")) {
-		  List<Path> paths = new ArrayList <>();
-		  try {
-			Files.walk(Paths.get(fs.baseDir().getAbsolutePath())).filter(Files::isRegularFile).filter(o->o.toString().toLowerCase().endsWith(".gcov")).forEach(o1->paths.add(o1));
-		  } catch (IOException e) {
-			e.printStackTrace();
-		  }
-		  for (Path path : paths) {
-			File report = path.toFile();
-			if (!report.isFile() || !report.exists() || !report.canRead()) {
-		      LOGGER.warn("Gcov report not found at {}", report);
-		    } else 
-		      parseReport(report, context);
-		  }
-	  }
-  }
+	@Override
+	public void execute(SensorContext context) {
+		String enable=configuration.get(GcovPlugin.ENABLE_COVERAGE).orElse("false");
+		if (!enable.equalsIgnoreCase("false")) {
+			List<Path> paths = new ArrayList <>();
+			try {
+				Files.walk(Paths.get(fs.baseDir().getAbsolutePath())).filter(Files::isRegularFile).filter(o->o.toString().toLowerCase().endsWith(".gcov")).forEach(o1->paths.add(o1));
+			} catch (IOException e) {
+				LOGGER.warn("Error while trying to get gcov reports");
+			}
+			for (Path path : paths) {
+				File report = path.toFile();
+				if (!report.isFile() || !report.exists() || !report.canRead()) {
+					LOGGER.warn("Gcov report not found at {}", report);
+				} 
+				else 
+					parseReport(report, context);
+			}
+		}
+	}
 
-  public void parseReport(File file, SensorContext context) {
-    LOGGER.info("parsing {}", file);
-    GcovReportParser.parseReport(file, context);
-  }
+	public void parseReport(File file, SensorContext context) {
+		LOGGER.info("parsing {}", file);
+		GcovReportParser.parseReport(file, context);
+	}
 
-  @Override
-  public String toString() {
-    return getClass().getSimpleName();
-  }
+	@Override
+	public String toString() {
+		return getClass().getSimpleName();
+	}
 
 }

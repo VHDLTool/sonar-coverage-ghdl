@@ -22,18 +22,12 @@
  */
 package com.s2ceh.sonar.plugins.vhdl;
 
-import com.google.common.base.Splitter;
-import com.google.common.collect.Iterables;
-import java.util.Arrays;
-import org.sonar.api.config.Settings;
-import org.sonar.api.resources.AbstractLanguage;
-
 /**
  * VHDL language implementation
  *
  * @since 1.3
  */
-public class CCPP extends AbstractLanguage {
+public class CCPP  {
 
   /**
    * VHDL key
@@ -54,32 +48,7 @@ public class CCPP extends AbstractLanguage {
    * Default VHDL files knows suffixes
    */
   public static final String DEFAULT_FILE_SUFFIXES = ".c,.cpp";
-
-  /**
-   * Settings of the plugin.
-   */
-  private final Settings settings;
-
-  /**
-   * Default constructor
-   */
-  public CCPP(Settings settings) {
-    super(KEY, NAME);
-    this.settings = settings;
-  }
-
-  /**
-   * {@inheritDoc}
-   *
-   * @see org.sonar.api.resources.AbstractLanguage#getFileSuffixes()
-   */
-  @Override
-  public String[] getFileSuffixes() {
-    String[] suffixes = Arrays.stream(settings.getStringArray(CCPP.FILE_SUFFIXES_KEY)).filter(s -> s != null && !s.trim().isEmpty()).toArray(String[]::new);
-    if (suffixes.length == 0) {
-      suffixes = Iterables.toArray(Splitter.on(',').split(DEFAULT_FILE_SUFFIXES), String.class);
-    }
-    return suffixes;
-  }
+  
+  private CCPP(){}
 
 }

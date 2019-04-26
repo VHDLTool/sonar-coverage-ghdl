@@ -24,6 +24,8 @@ package org.sonar.plugins.gcov;
 
 
 import org.sonar.api.batch.sensor.SensorContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.sonar.api.batch.fs.InputFile;
 
 
@@ -41,13 +43,11 @@ public class GcovReportParser {
   private final SensorContext context;
   
   private boolean definedPath=false;
-   
-  private String path;
-  
-  private InputFile resource;
   
   private NewCoverage coverage;
   
+  private static final Logger LOGGER = LoggerFactory.getLogger(GcovReportParser.class);
+
 
   private GcovReportParser(SensorContext context) {
     this.context = context;
@@ -64,6 +64,7 @@ public class GcovReportParser {
 	  BufferedReader reader;
 		try {
 			reader = new BufferedReader(new FileReader(gcovFile));
+			try{
 			String line = reader.readLine();
 			while (line != null) {	
 				line=line.replaceAll("\\s","");
@@ -72,12 +73,18 @@ public class GcovReportParser {
 			}
 			if(coverage!=null)
 				coverage.save();
-			reader.close();
-		} catch (IOException e) {
-			e.printStackTrace();}
+			} finally{
+				reader.close();
+			}			
+		}
+		catch (IOException e) {
+			  LOGGER.warn("Error while trying to parse gcov file");
+			}
   }
 
   private void collectReportMeasures(String line) {
+	  String path;	  
+	  InputFile resource;
 	  String[] lines=line.split("\\:",3);
 	  try {
 		  int lineNumber=Integer.parseInt(lines[1]);
@@ -96,10 +103,14 @@ public class GcovReportParser {
 			  if(!lines[0].equals("-"))
 				  try {
 				  visits = Integer.parseInt(lines[0]);}
-				  catch (NumberFormatException e) {}
+				  catch (NumberFormatException e) {
+					  LOGGER.warn("Abnormal characters in gcov report");
+					  }
 				  coverage.lineHits(lineNumber, visits);
 		  }
-	  }catch (Exception e) {}
+	  }catch (Exception e) {
+		  LOGGER.warn("Ignored line in gcov report");
+		  }
   }
 
   private boolean resourceExists(InputFile file) {

@@ -28,7 +28,6 @@ import org.sonar.api.SonarQubeSide;
 import org.sonar.api.SonarRuntime;
 import org.sonar.api.internal.SonarRuntimeImpl;
 import org.sonar.api.utils.Version;
-import org.sonar.plugins.gcov.GcovPlugin;
 
 import static org.fest.assertions.Assertions.assertThat;
 

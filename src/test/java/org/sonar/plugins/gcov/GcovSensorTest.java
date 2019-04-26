@@ -34,8 +34,7 @@ import org.sonar.api.batch.sensor.coverage.NewCoverage;
 import org.sonar.api.config.Configuration;
 import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.scan.filesystem.PathResolver;
-import org.sonar.plugins.gcov.GcovPlugin;
-import org.sonar.plugins.gcov.GcovSensor;
+
 
 import java.io.File;
 import java.net.URISyntaxException;
@@ -48,7 +47,6 @@ import static org.mockito.MockitoAnnotations.initMocks;
 public class GcovSensorTest {
 
   private GcovSensor sensor;
-  private Configuration configuration;
   private MapSettings settings;
 
   @Mock
@@ -70,8 +68,8 @@ public class GcovSensorTest {
 
   @Before
   public void setUp() {
-    initMocks(this);
-    configuration=new MapSettings().asConfig();
+    initMocks(this);      
+    Configuration configuration=new MapSettings().asConfig();
     settings = new MapSettings();
     sensor = new GcovSensor(fs, settings, configuration);
 
