@@ -32,8 +32,6 @@ import org.sonar.api.batch.fs.InputFile;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
-
 
 
 import org.sonar.api.batch.sensor.coverage.NewCoverage;
@@ -77,7 +75,7 @@ public class GcovReportParser {
 				reader.close();
 			}			
 		}
-		catch (IOException e) {
+		catch (Exception e) {
 			  LOGGER.warn("Error while trying to parse gcov file");
 			}
   }

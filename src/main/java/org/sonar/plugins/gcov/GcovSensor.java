@@ -31,11 +31,8 @@ import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.config.Configuration;
 import org.sonar.api.config.Settings;
 
-import com.s2ceh.sonar.plugins.vhdl.CCPP;
-import com.s2ceh.sonar.plugins.vhdl.Vhdl;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -45,10 +42,14 @@ import java.util.List;
 public class GcovSensor implements Sensor {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(GcovSensor.class);
+	
+	private static final String FALSESTRING = "false";
 
 	private FileSystem fs;
 
 	private Configuration configuration;
+	
+	private String defaultEnable=FALSESTRING;
 
 	public GcovSensor(FileSystem fs, Settings settings,
 			Configuration configuration) {
@@ -58,17 +59,17 @@ public class GcovSensor implements Sensor {
 
 	@Override
 	public void describe(SensorDescriptor descriptor) {
-		descriptor.onlyOnLanguages(Vhdl.KEY,CCPP.KEY).name("GcovSensor");
+		descriptor.onlyOnLanguages("vhdl","c").name("GcovSensor");
 	}
 
 	@Override
 	public void execute(SensorContext context) {
-		String enable=configuration.get(GcovPlugin.ENABLE_COVERAGE).orElse("false");
-		if (!enable.equalsIgnoreCase("false")) {
+		String enable=configuration.get(GcovPlugin.ENABLE_COVERAGE).orElse(defaultEnable);
+		if (!enable.equalsIgnoreCase(FALSESTRING)) {
 			List<Path> paths = new ArrayList <>();
 			try {
 				Files.walk(Paths.get(fs.baseDir().getAbsolutePath())).filter(Files::isRegularFile).filter(o->o.toString().toLowerCase().endsWith(".gcov")).forEach(o1->paths.add(o1));
-			} catch (IOException e) {
+			} catch (Exception e) {
 				LOGGER.warn("Error while trying to get gcov reports");
 			}
 			for (Path path : paths) {
@@ -85,6 +86,14 @@ public class GcovSensor implements Sensor {
 	public void parseReport(File file, SensorContext context) {
 		LOGGER.info("parsing {}", file);
 		GcovReportParser.parseReport(file, context);
+	}
+	
+	public void defaultToTrue(){
+		this.defaultEnable="true";
+	}
+	
+	public void defaultToFalse(){
+		this.defaultEnable=FALSESTRING;
 	}
 
 	@Override

@@ -35,7 +35,6 @@ import org.sonar.api.config.Configuration;
 import org.sonar.api.config.internal.MapSettings;
 import org.sonar.api.scan.filesystem.PathResolver;
 
-
 import java.io.File;
 import java.net.URISyntaxException;
 
@@ -72,7 +71,8 @@ public class GcovSensorTest {
     Configuration configuration=new MapSettings().asConfig();
     settings = new MapSettings();
     sensor = new GcovSensor(fs, settings, configuration);
-
+    sensor.defaultToFalse();
+    sensor.toString();
     when(context.fileSystem()).thenReturn(fs);
     when(fs.predicates()).thenReturn(predicates);
     when(inputFile.file()).thenReturn(file);
@@ -117,6 +117,15 @@ public class GcovSensorTest {
     sensor.parseReport(getCoverageReport(), context);
     verify(context, never()).newCoverage();
   }
+ 
+  @Test
+  public void testForceExecute() throws URISyntaxException {
+	when(context.fileSystem().inputFile(context.fileSystem().predicates().hasPath(anyString()))).thenReturn(inputFile);
+    sensor.defaultToTrue();
+	sensor.execute(context);
+    verify(context, never()).newCoverage();
+  }
+
   
   @Test
   public void testBadReport() throws URISyntaxException {
@@ -124,7 +133,27 @@ public class GcovSensorTest {
     sensor.parseReport(new File(getClass().getResource("/org/sonar/plugins/gcov/GcovSensorTests/bad-coverage.gcov").toURI()), context);
     verify(context, never()).newCoverage();
   }
+  
+  @Test
+  public void testSlashPath() throws URISyntaxException {
+	when(context.fileSystem().inputFile(context.fileSystem().predicates().hasPath(anyString()))).thenReturn(inputFile);
+    sensor.parseReport(new File(getClass().getResource("/org/sonar/plugins/gcov/GcovSensorTests/slash-coverage.gcov").toURI()), context);
+    verify(context, times(1)).newCoverage();
+  }
 
+  @Test
+  public void testVoidReport() throws URISyntaxException {
+	when(context.fileSystem().inputFile(context.fileSystem().predicates().hasPath(anyString()))).thenReturn(inputFile);
+    sensor.parseReport(null, context);
+    verify(context, never()).newCoverage();
+  }
+  
+  @Test
+  public void testBadValueReport() throws URISyntaxException {
+	when(context.fileSystem().inputFile(context.fileSystem().predicates().hasPath(anyString()))).thenReturn(inputFile);
+    sensor.parseReport(new File(getClass().getResource("/org/sonar/plugins/gcov/GcovSensorTests/badvalue-coverage.gcov").toURI()), context);
+    verify(context, times(1)).newCoverage();
+  }
   
   private File getCoverageReport() throws URISyntaxException {
     return new File(getClass().getResource("/org/sonar/plugins/gcov/GcovSensorTests/commons-chain-coverage.gcov").toURI());
