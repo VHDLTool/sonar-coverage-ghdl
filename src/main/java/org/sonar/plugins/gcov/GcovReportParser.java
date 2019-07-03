@@ -98,13 +98,13 @@ public class GcovReportParser {
 			  }
 		  } else if (lineNumber!=0 && coverage != null) {
 			  int visits=0;
-			  if(!lines[0].equals("-"))
+			  if(!lines[0].equals("-")) {
 				  try {
 				  visits = Integer.parseInt(lines[0]);}
 				  catch (NumberFormatException e) {
 					  LOGGER.warn("Abnormal characters in gcov report");
 					  }
-				  coverage.lineHits(lineNumber, visits);
+				  coverage.lineHits(lineNumber, visits);}
 		  }
 	  }catch (Exception e) {
 		  LOGGER.warn("Ignored line in gcov report");
