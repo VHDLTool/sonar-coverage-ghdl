@@ -104,7 +104,6 @@ public class GcovSensorTest {
 	sensor.parseReport(getCoverageReport(), context);
     verify(context, times(1)).newCoverage();
     verify(newCoverage, times(1)).onFile(inputFile);
-    verify(newCoverage).lineHits(1,0);
     verify(newCoverage).lineHits(2,7);
     verify(newCoverage).lineHits(3,0);
 
