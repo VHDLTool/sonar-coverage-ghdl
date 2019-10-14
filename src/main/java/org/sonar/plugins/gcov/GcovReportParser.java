@@ -42,6 +42,15 @@ public class GcovReportParser {
   
   private boolean definedPath=false;
   
+  private int previousLineNumber = 0;
+  
+  private String previousLineCode="";
+  
+  private int branchHits = 0;
+
+  private int branchMisses = 0;
+
+  
   private NewCoverage coverage;
   
   private static final Logger LOGGER = LoggerFactory.getLogger(GcovReportParser.class);
@@ -84,13 +93,43 @@ public class GcovReportParser {
 	  String path;	  
 	  InputFile resource;
 	  String[] lines=line.split("\\:",3);
-	  try {
+	  if (lines[0].startsWith("branch")) {
+		  String branchLine=lines[0];
+		  branchLine=branchLine.substring(7);
+		  if(branchLine.startsWith("taken")&&!branchLine.substring(6).startsWith("0"))
+			  branchHits++;
+		  else
+			  branchMisses++;
+	  }
+	  else 
+	  {
+		  int totalBranches = branchHits+branchMisses;
+		  if (totalBranches!=0 && previousLineNumber!=0 && coverage!=null && (previousLineCode.startsWith("if")||previousLineCode.startsWith("elsif")||previousLineCode.startsWith("case")||previousLineCode.contains("when"))) {
+			  coverage.conditions(previousLineNumber, totalBranches, branchHits);		  
+		  }
+		  try {	
+		  String absolutePath="";
+		  try {
+			  absolutePath=context.fileSystem().baseDir().getAbsolutePath().replace("\\", "/").replace(" ", "");
+		  }catch (Exception e) {}
 		  int lineNumber=Integer.parseInt(lines[1]);
-		  if (lineNumber==0 && !definedPath){
+		  if (lineNumber==0 && !definedPath){			  
 			  definedPath=true;
 			  path=lines[2].replaceFirst("Source:", "");
 			  if (path.startsWith("/"))
-				  path=path.replaceFirst("/", "");
+				  path=path.substring(1);
+			  path=path.replace(absolutePath, "");
+			  try {
+				  path=path.replace(absolutePath.substring(1), "");
+			  }catch (Exception e) {}
+			  try {
+				  path=path.replace(absolutePath.substring(2), "");
+			  }catch (Exception e) {}
+			  try {
+				  path=path.replace(absolutePath.substring(3), "");
+			  }catch (Exception e) {}
+			  if (path.startsWith("/"))
+				  path=path.substring(1);
 			  resource =context.fileSystem().inputFile(context.fileSystem().predicates().hasPath(path));
 			  if (resourceExists(resource)) {
 			    coverage = context.newCoverage();
@@ -102,13 +141,18 @@ public class GcovReportParser {
 				  try {
 				  visits = Integer.parseInt(lines[0]);}
 				  catch (NumberFormatException e) {
-					  LOGGER.warn("Abnormal characters in gcov report");
+					  //LOGGER.warn("Abnormal characters in gcov report");
 					  }
 				  coverage.lineHits(lineNumber, visits);}
+			  previousLineNumber=lineNumber;
+			  previousLineCode=lines[2];
 		  }
 	  }catch (Exception e) {
-		  LOGGER.warn("Ignored line in gcov report");
+		  //LOGGER.warn("Ignored line in gcov report");
 		  }
+	  branchHits=0;
+	  branchMisses=0;
+	  }
   }
 
   private boolean resourceExists(InputFile file) {

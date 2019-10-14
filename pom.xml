@@ -9,7 +9,7 @@
     <relativePath />
   </parent>
 
-  <artifactId>sonar-gcov-plugin</artifactId>
+  <artifactId>sonar-coverage-ghdl</artifactId>
   <version>2.0</version>
   <packaging>sonar-plugin</packaging>
 
@@ -33,7 +33,7 @@
 	<license.skip>true</license.skip> <!-- There is no license header for now -->
     <sonar.version>6.7</sonar.version>
     <!--<sonar-java.version>5.1.0.13090</sonar-java.version>-->
-	<jacoco.version>0.7.5.201505241946</jacoco.version>
+	<jacoco.version>0.8.4</jacoco.version>
     <maven.test.redirectTestOutputToFile>true</maven.test.redirectTestOutputToFile>
   </properties>
 
@@ -144,7 +144,6 @@
           <pluginName>Gcov</pluginName>
           <pluginClass>org.sonar.plugins.gcov.GcovPlugin</pluginClass>
           <pluginDescription><![CDATA[Get code coverage with <a href="http://cobertura.sourceforge.net/">Cobertura</a>.]]></pluginDescription>
-          <requirePlugins>java:5.1.0.13090</requirePlugins>
         </configuration>
       </plugin>
       <plugin>

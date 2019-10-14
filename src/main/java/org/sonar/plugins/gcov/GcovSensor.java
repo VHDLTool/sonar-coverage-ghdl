@@ -59,7 +59,7 @@ public class GcovSensor implements Sensor {
 
 	@Override
 	public void describe(SensorDescriptor descriptor) {
-		descriptor.onlyOnLanguages("vhdl","c").name("GcovSensor");
+		descriptor.name("GcovSensor");
 	}
 
 	@Override

@@ -33,7 +33,7 @@ import java.util.List;
 
 public final class GcovPlugin implements Plugin{
 
-  public static final String ENABLE_COVERAGE = "true";
+  public static final String ENABLE_COVERAGE = "sonar.gcov.enableCoverage";
 
   public List<Object> getExtensions() {
     return ImmutableList.of(
