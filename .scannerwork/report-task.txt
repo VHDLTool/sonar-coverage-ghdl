@@ -1,6 +1,0 @@
-projectKey=sonar_Gcov
-serverUrl=http://localhost:9000
-serverVersion=6.7.6.38781
-dashboardUrl=http://localhost:9000/dashboard/index/sonar_Gcov
-ceTaskId=AWpaajt7yBLzCw_xphVT
-ceTaskUrl=http://localhost:9000/api/ce/task?id=AWpaajt7yBLzCw_xphVT
