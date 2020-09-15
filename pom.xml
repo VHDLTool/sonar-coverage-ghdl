@@ -143,7 +143,7 @@
           <pluginKey>gcov</pluginKey>
           <pluginName>Gcov</pluginName>
           <pluginClass>org.sonar.plugins.gcov.GcovPlugin</pluginClass>
-          <pluginDescription><![CDATA[Get code coverage with <a href="http://cobertura.sourceforge.net/">Cobertura</a>.]]></pluginDescription>
+          <pluginDescription><![CDATA[Get code coverage with Gcov</a>.]]></pluginDescription>
         </configuration>
       </plugin>
       <plugin>
