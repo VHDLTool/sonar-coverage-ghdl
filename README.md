@@ -5,6 +5,10 @@
 
 This plugin allows to import .gcov reports data in Sonarqube. Gcov reports can be obtained from vhdl files using ghdl-gcc.
 
+## Compilation process
+
+This plugin can be built with the mvn clean package install command.
+
 ## Usage
 All .gcov files present in the project directory will be analysed. The results will be shown in the project's coverage tab in Sonarqube.  
 
