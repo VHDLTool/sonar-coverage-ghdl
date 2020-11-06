@@ -24,8 +24,12 @@ import org.sonar.api.Plugin;
 import org.sonar.api.SonarEdition;
 import org.sonar.api.SonarQubeSide;
 import org.sonar.api.SonarRuntime;
+import org.sonar.api.config.PropertyDefinition;
 import org.sonar.api.internal.SonarRuntimeImpl;
 import org.sonar.api.utils.Version;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -40,11 +44,34 @@ public class GcovPluginTest {
     assertThat(context.getExtensions()).hasSize(EXTENSIONS);
   }
 
+  @Test
+  public void should_have_gcov_as_category_for_properties() {
+    List<PropertyDefinition> properties = properties();
+    assertThat(properties).isNotEmpty();
+    for (PropertyDefinition propertyDefinition : properties) {
+      if (propertyDefinition.key().contains("gcov")) {
+        assertThat(propertyDefinition.category()).isEqualTo("codeCoverage");
+        assertThat(propertyDefinition.subCategory()).isEqualTo("Gcov");
+      }
+    }
+  }
+
+  private List<PropertyDefinition> properties() {
+    List<PropertyDefinition> propertiesList = new ArrayList<>();
+    List extensions = setupContext(SonarRuntimeImpl.forSonarQube(LTS_VERSION, SonarQubeSide.SERVER, SonarEdition.COMMUNITY)).getExtensions();
+
+    for (Object extension : extensions) {
+      if (extension instanceof PropertyDefinition) {
+        propertiesList.add((PropertyDefinition) extension);
+      }
+    }
+
+    return propertiesList;
+  }
+
   private Plugin.Context setupContext(SonarRuntime runtime) {
     Plugin.Context context = new Plugin.Context(runtime);
     new GcovPlugin().define(context);
     return context;
   }
-
-  //TODO : test properties
 }

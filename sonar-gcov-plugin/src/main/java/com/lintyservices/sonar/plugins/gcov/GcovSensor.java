@@ -24,7 +24,6 @@ import org.sonar.api.batch.sensor.Sensor;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.SensorDescriptor;
 import org.sonar.api.config.Configuration;
-import org.sonar.api.config.Settings;
 import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 
@@ -37,18 +36,14 @@ import java.util.List;
 
 public class GcovSensor implements Sensor {
 
-  private static final Logger LOGGER = Loggers.get(GcovSensor.class);
-
+  private static final Logger LOG = Loggers.get(GcovSensor.class);
   private static final String FALSESTRING = "false";
 
   private FileSystem fs;
-
   private Configuration configuration;
-
   private String defaultEnable = FALSESTRING;
 
-  public GcovSensor(FileSystem fs, Settings settings,
-                    Configuration configuration) {
+  public GcovSensor(FileSystem fs, Configuration configuration) {
     this.fs = fs;
     this.configuration = configuration;
   }
@@ -66,12 +61,14 @@ public class GcovSensor implements Sensor {
       try {
         Files.walk(Paths.get(fs.baseDir().getAbsolutePath())).filter(Files::isRegularFile).filter(o -> o.toString().toLowerCase().endsWith(".gcov")).forEach(o1 -> paths.add(o1));
       } catch (Exception e) {
-        LOGGER.warn("Error while trying to get gcov reports");
+        // FIXME: We should fail if no report can be found. Where are those reported located?
+        LOG.warn("Error while trying to get gcov reports");
       }
       for (Path path : paths) {
         File report = path.toFile();
         if (!report.isFile() || !report.exists() || !report.canRead()) {
-          LOGGER.warn("Gcov report not found at {}", report);
+          // FIXME: On log per path?
+          LOG.warn("Gcov report not found at {}", report);
         } else
           parseReport(report, context);
       }
@@ -79,7 +76,7 @@ public class GcovSensor implements Sensor {
   }
 
   public void parseReport(File file, SensorContext context) {
-    LOGGER.info("parsing {}", file);
+    LOG.info("parsing {}", file);
     GcovReportParser.parseReport(file, context);
   }
 
@@ -90,10 +87,4 @@ public class GcovSensor implements Sensor {
   public void defaultToFalse() {
     this.defaultEnable = FALSESTRING;
   }
-
-  @Override
-  public String toString() {
-    return getClass().getSimpleName();
-  }
-
 }

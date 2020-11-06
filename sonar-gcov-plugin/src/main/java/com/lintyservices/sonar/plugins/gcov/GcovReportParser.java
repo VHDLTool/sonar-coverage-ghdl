@@ -39,13 +39,14 @@ public class GcovReportParser {
 
   private String previousLineCode = "";
 
+  // FIXME: Why are the below variables at class level?
   private int branchHits = 0;
 
   private int branchMisses = 0;
 
   private NewCoverage coverage;
 
-  private static final Logger LOGGER = Loggers.get(GcovReportParser.class);
+  private static final Logger LOG = Loggers.get(GcovReportParser.class);
 
   private GcovReportParser(SensorContext context) {
     this.context = context;
@@ -57,6 +58,7 @@ public class GcovReportParser {
 
   private void parse(File gcovFile) {
     BufferedReader reader;
+    // FIXME: There should be a way to write this without the need of explicitly closing it.
     try {
       reader = new BufferedReader(new FileReader(gcovFile));
       try {
@@ -66,13 +68,14 @@ public class GcovReportParser {
           collectReportMeasures(line);
           line = reader.readLine();
         }
-        if (coverage != null)
+        if (coverage != null) {
           coverage.save();
+        }
       } finally {
         reader.close();
       }
     } catch (Exception e) {
-      LOGGER.warn("Error while trying to parse gcov file");
+      //FIXME: throw new IllegalStateException("Cannot parse Gcov report", e);
     }
   }
 
@@ -101,6 +104,8 @@ public class GcovReportParser {
         int lineNumber = Integer.parseInt(lines[1]);
         if (lineNumber == 0 && !definedPath) {
           definedPath = true;
+
+          //FIXME: Path manipulation should be extracted to a function. Add detailed explanations
           path = lines[2].replaceFirst("Source:", "");
           if (path.startsWith("/"))
             path = path.substring(1);
@@ -108,14 +113,17 @@ public class GcovReportParser {
           try {
             path = path.replace(absolutePath.substring(1), "");
           } catch (Exception e) {
+            // FIXME: We should do something, at least log
           }
           try {
             path = path.replace(absolutePath.substring(2), "");
           } catch (Exception e) {
+            // FIXME: We should do something, at least log
           }
           try {
             path = path.replace(absolutePath.substring(3), "");
           } catch (Exception e) {
+            // FIXME: We should do something, at least log
           }
           if (path.startsWith("/"))
             path = path.substring(1);
@@ -130,6 +138,7 @@ public class GcovReportParser {
             try {
               visits = Integer.parseInt(lines[0]);
             } catch (NumberFormatException e) {
+              // FIXME: We should do something, at least log
               //LOGGER.warn("Abnormal characters in gcov report");
             }
             coverage.lineHits(lineNumber, visits);
@@ -138,6 +147,7 @@ public class GcovReportParser {
           previousLineCode = lines[2];
         }
       } catch (Exception e) {
+        // FIXME: We should do something, at least log
         //LOGGER.warn("Ignored line in gcov report");
       }
       branchHits = 0;

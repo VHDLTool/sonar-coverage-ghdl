@@ -31,17 +31,18 @@ public final class GcovPlugin implements Plugin {
 
   public static final String ENABLE_COVERAGE = "sonar.gcov.enableCoverage";
 
+  private static final String SUB_CATEGORY = "Gcov";
+
   public List<Object> getExtensions() {
     return ImmutableList.of(
       PropertyDefinition.builder(ENABLE_COVERAGE)
         .category(CoreProperties.CATEGORY_CODE_COVERAGE)
-        .subCategory("Gcov")
-        .name("Enable coverage")
-        .description("Enable parsing of gcov files and display of coverage results in sonarqube.")
+        .subCategory(SUB_CATEGORY)
+        .name("Enable Coverage")
+        .description("Enable parsing of gcov files and display of coverage results in SonarQube.")
         .defaultValue("true")
         .onQualifiers(Qualifiers.PROJECT)
         .build(),
-
       GcovSensor.class);
   }
 

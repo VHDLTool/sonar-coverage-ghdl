@@ -70,7 +70,7 @@ public class GcovSensorTest {
     initMocks(this);
     Configuration configuration = new MapSettings().asConfig();
     settings = new MapSettings();
-    sensor = new GcovSensor(fs, settings, configuration);
+    sensor = new GcovSensor(fs, configuration);
     sensor.defaultToFalse();
     sensor.toString();
     when(context.fileSystem()).thenReturn(fs);
