@@ -1,4 +1,4 @@
-        -:    0:Source:D:/Stage/2018-001-test_coverage_sonarqube/root/WorkSpaceMentor/plasma/plasma_custom/dev/src/cpu/alu.vhd
+        -:    0:Source:/my-project/my-repo/src/cpu/alu.vhd
         -:    0:Object:alu.bb
         -:    1:-------------------------------------------------------------------------------
         7:    2:if

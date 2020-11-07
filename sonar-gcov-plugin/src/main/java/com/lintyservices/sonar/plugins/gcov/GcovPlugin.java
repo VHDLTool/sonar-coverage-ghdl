@@ -39,7 +39,7 @@ public final class GcovPlugin implements Plugin {
         .category(CoreProperties.CATEGORY_CODE_COVERAGE)
         .subCategory(SUB_CATEGORY)
         .name("Enable Coverage")
-        .description("Enable parsing of gcov files and display of coverage results in SonarQube.")
+        .description("Enable parsing of Gcov files and display of coverage results in SonarQube.")
         .defaultValue("true")
         .onQualifiers(Qualifiers.PROJECT)
         .build(),

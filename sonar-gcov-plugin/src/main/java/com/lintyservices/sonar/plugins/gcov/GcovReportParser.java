@@ -22,8 +22,6 @@ package com.lintyservices.sonar.plugins.gcov;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.sensor.SensorContext;
 import org.sonar.api.batch.sensor.coverage.NewCoverage;
-import org.sonar.api.utils.log.Logger;
-import org.sonar.api.utils.log.Loggers;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -32,131 +30,125 @@ import java.io.FileReader;
 public class GcovReportParser {
 
   private final SensorContext context;
-
-  private boolean definedPath = false;
-
-  private int previousLineNumber = 0;
-
-  private String previousLineCode = "";
-
-  // FIXME: Why are the below variables at class level?
-  private int branchHits = 0;
-
-  private int branchMisses = 0;
-
   private NewCoverage coverage;
 
-  private static final Logger LOG = Loggers.get(GcovReportParser.class);
+  private String previousLineCode = "";
+  private int previousLineNumber = 0;
+  private int branchHits = 0;
+  private int branchMisses = 0;
 
-  private GcovReportParser(SensorContext context) {
+  public GcovReportParser(SensorContext context) {
     this.context = context;
   }
 
-  public static void parseReport(File gcovFile, SensorContext context) {
-    new GcovReportParser(context).parse(gcovFile);
-  }
-
-  private void parse(File gcovFile) {
-    BufferedReader reader;
-    // FIXME: There should be a way to write this without the need of explicitly closing it.
-    try {
-      reader = new BufferedReader(new FileReader(gcovFile));
-      try {
-        String line = reader.readLine();
-        while (line != null) {
-          line = line.replaceAll("\\s", "");
-          collectReportMeasures(line);
-          line = reader.readLine();
-        }
-        if (coverage != null) {
-          coverage.save();
-        }
-      } finally {
-        reader.close();
+  public void parseFile(File gcovFile) {
+    try (BufferedReader reader = new BufferedReader(new FileReader(gcovFile))) {
+      String line = reader.readLine();
+      while (line != null) {
+        line = line.replaceAll("\\s", "");
+        collectCoverageData(line);
+        line = reader.readLine();
+      }
+      if (coverage != null) {
+        coverage.save();
       }
     } catch (Exception e) {
-      //FIXME: throw new IllegalStateException("Cannot parse Gcov report", e);
+      throw new IllegalStateException("Cannot parse Gcov report", e);
     }
   }
 
-  private void collectReportMeasures(String line) {
-    String path;
-    InputFile resource;
-    String[] lines = line.split("\\:", 3);
-    if (lines[0].startsWith("branch")) {
-      String branchLine = lines[0];
-      branchLine = branchLine.substring(7);
-      if (branchLine.startsWith("taken") && !branchLine.substring(6).startsWith("0"))
-        branchHits++;
-      else
-        branchMisses++;
-    } else {
-      int totalBranches = branchHits + branchMisses;
-      if (totalBranches != 0 && previousLineNumber != 0 && coverage != null && (previousLineCode.startsWith("if") || previousLineCode.startsWith("elsif") || previousLineCode.startsWith("case") || previousLineCode.contains("when"))) {
-        coverage.conditions(previousLineNumber, totalBranches, branchHits);
+  private void collectCoverageData(String line) {
+    if (getLineNumber(line) == 0) {
+      if (coverage == null) {
+        createCoverageObject(line);
       }
+    } else if (coverage != null) {
+      if (isBranchLine(line)) {
+        computeBranchHits(line);
+      } else {
+        // No longer in a branch context => Save branch coverage from the previous lines if it exists
+        saveBranchCoverageData();
+        resetBranchCoverageData();
+        saveLineCoverageData(line);
+      }
+    }
+  }
+
+  private void createCoverageObject(String line) {
+    String absolutePath = context.fileSystem().baseDir().getAbsolutePath().replace("\\", "/").replace(" ", "");
+    String path = getVhdlFileRelativePath(absolutePath, getLineDetails(line)[2]);
+    InputFile resource = context.fileSystem().inputFile(context.fileSystem().predicates().hasPath(path));
+    if (vhdlFileExist(resource)) {
+      coverage = context.newCoverage();
+      coverage.onFile(resource);
+    }
+  }
+
+  private void saveLineCoverageData(String line) {
+    String[] lineDetails = getLineDetails(line);
+    int lineNumber = getLineNumber(line);
+
+    if (!lineDetails[0].equals("-")) {
+      int visits = 0;
       try {
-        String absolutePath = "";
-        try {
-          absolutePath = context.fileSystem().baseDir().getAbsolutePath().replace("\\", "/").replace(" ", "");
-        } catch (Exception e) {
-        }
-        int lineNumber = Integer.parseInt(lines[1]);
-        if (lineNumber == 0 && !definedPath) {
-          definedPath = true;
-
-          //FIXME: Path manipulation should be extracted to a function. Add detailed explanations
-          path = lines[2].replaceFirst("Source:", "");
-          if (path.startsWith("/"))
-            path = path.substring(1);
-          path = path.replace(absolutePath, "");
-          try {
-            path = path.replace(absolutePath.substring(1), "");
-          } catch (Exception e) {
-            // FIXME: We should do something, at least log
-          }
-          try {
-            path = path.replace(absolutePath.substring(2), "");
-          } catch (Exception e) {
-            // FIXME: We should do something, at least log
-          }
-          try {
-            path = path.replace(absolutePath.substring(3), "");
-          } catch (Exception e) {
-            // FIXME: We should do something, at least log
-          }
-          if (path.startsWith("/"))
-            path = path.substring(1);
-          resource = context.fileSystem().inputFile(context.fileSystem().predicates().hasPath(path));
-          if (resourceExists(resource)) {
-            coverage = context.newCoverage();
-            coverage.onFile(resource);
-          }
-        } else if (lineNumber != 0 && coverage != null) {
-          int visits = 0;
-          if (!lines[0].equals("-")) {
-            try {
-              visits = Integer.parseInt(lines[0]);
-            } catch (NumberFormatException e) {
-              // FIXME: We should do something, at least log
-              //LOGGER.warn("Abnormal characters in gcov report");
-            }
-            coverage.lineHits(lineNumber, visits);
-          }
-          previousLineNumber = lineNumber;
-          previousLineCode = lines[2];
-        }
-      } catch (Exception e) {
-        // FIXME: We should do something, at least log
-        //LOGGER.warn("Ignored line in gcov report");
+        visits = Integer.parseInt(lineDetails[0]);
+      } catch (NumberFormatException e) {
+        // TODO: Is it possible? Or report is wrong? Comments?
+        // Do not take into account this line as it is not a line about code coverage
       }
-      branchHits = 0;
-      branchMisses = 0;
+      coverage.lineHits(lineNumber, visits);
+    }
+    previousLineNumber = lineNumber;
+    previousLineCode = lineDetails[2];
+  }
+
+  private void computeBranchHits(String line) {
+    String branchLine = getLineDetails(line)[0];
+    branchLine = branchLine.substring(7);
+    if (branchLine.startsWith("taken") && !branchLine.substring(6).startsWith("0")) {
+      branchHits++;
+    } else {
+      branchMisses++;
     }
   }
 
-  private boolean resourceExists(InputFile file) {
+  private void saveBranchCoverageData() {
+    int totalBranches = branchHits + branchMisses;
+    if (totalBranches != 0 && previousLineNumber != 0 && coverage != null
+      && (previousLineCode.startsWith("if") || previousLineCode.startsWith("elsif") || previousLineCode.startsWith("case") || previousLineCode.contains("when"))) {
+      coverage.conditions(previousLineNumber, totalBranches, branchHits);
+    }
+  }
+
+  private void resetBranchCoverageData() {
+    branchHits = 0;
+    branchMisses = 0;
+  }
+
+  private boolean vhdlFileExist(InputFile file) {
     return file != null;
   }
 
+  private String getVhdlFileRelativePath(String gcovReportAbsolutePath, String vhdlFilePathLineInGcovReport) {
+    return vhdlFilePathLineInGcovReport
+      .replaceFirst("Source:", "")
+      .replace(gcovReportAbsolutePath, "");
+  }
+
+  private boolean isBranchLine(String line) {
+    return getLineDetails(line)[0].startsWith("branch");
+  }
+
+  private int getLineNumber(String line) {
+    try {
+      return Integer.parseInt(getLineDetails(line)[1]);
+    } catch (Exception e) {
+      // Not a line containing line coverage information (could be a line containing branch coverage information for instance)
+      return -1;
+    }
+  }
+
+  private String[] getLineDetails(String line) {
+    return line.split("\\:", 3);
+  }
 }

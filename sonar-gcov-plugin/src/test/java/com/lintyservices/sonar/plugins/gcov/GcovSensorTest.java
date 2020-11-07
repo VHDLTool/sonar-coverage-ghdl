@@ -20,7 +20,9 @@
 package com.lintyservices.sonar.plugins.gcov;
 
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.sonar.api.batch.fs.FilePredicate;
 import org.sonar.api.batch.fs.FilePredicates;
@@ -48,6 +50,9 @@ public class GcovSensorTest {
   private GcovSensor sensor;
   private MapSettings settings;
 
+  @Rule
+  public ExpectedException exceptionRule = ExpectedException.none();
+
   @Mock
   private SensorContext context;
   @Mock
@@ -71,91 +76,105 @@ public class GcovSensorTest {
     Configuration configuration = new MapSettings().asConfig();
     settings = new MapSettings();
     sensor = new GcovSensor(fs, configuration);
-    sensor.defaultToFalse();
-    sensor.toString();
     when(context.fileSystem()).thenReturn(fs);
     when(fs.predicates()).thenReturn(predicates);
     when(inputFile.file()).thenReturn(file);
     when(predicates.is(file)).thenReturn(predicate);
     when(fs.inputFile(predicate)).thenReturn(inputFile);
-
+    when(fs.baseDir()).thenReturn(file);
     when(context.newCoverage()).thenReturn(newCoverage);
   }
 
   @Test
-  public void shouldNotFailIfReportNotSpecifiedOrNotFound() throws URISyntaxException {
-    when(pathResolver.relativeFile(any(File.class), anyString()))
-      .thenReturn(new File("notFound.gcov"));
+  public void should_not_fail_if_coverage_not_enabled() {
+    when(pathResolver.relativeFile(any(File.class), anyString())).thenReturn(new File("noReport.gcov"));
+    settings.setProperty(GcovPlugin.ENABLE_COVERAGE, "false");
 
-    settings.setProperty(GcovPlugin.ENABLE_COVERAGE, "notFound.gcov");
     sensor.execute(context);
 
-
-    File report = getCoverageReport();
-    settings.setProperty(GcovPlugin.ENABLE_COVERAGE, report.getParent());
-    when(pathResolver.relativeFile(any(File.class), anyString()))
-      .thenReturn(report.getParentFile().getParentFile());
-    sensor.execute(context);
+    verify(context, never()).newCoverage();
+    verify(newCoverage, never()).save();
   }
 
   @Test
-  public void collectFileLineCoverage() throws URISyntaxException {
+  public void should_properly_collect_coverage_data_on_unix_file() {
+    when(fs.baseDir().getAbsolutePath()).thenReturn("/my-project/my-repo");
     when(context.fileSystem().inputFile(context.fileSystem().predicates().hasPath(anyString()))).thenReturn(inputFile);
-    sensor.parseReport(getCoverageReport(), context);
+
+    sensor.parseFile(getGcovFile("unix-path.gcov"), context);
+
     verify(context, times(1)).newCoverage();
     verify(newCoverage, times(1)).onFile(inputFile);
     verify(newCoverage).lineHits(2, 7);
     verify(newCoverage).lineHits(3, 0);
-
+    verify(newCoverage).conditions(2, 3, 1);
     verify(newCoverage, times(1)).save();
   }
 
   @Test
-  public void testDoNotSaveMeasureOnResourceWhichDoesntExistInTheContext() throws URISyntaxException {
+  public void should_properly_collect_coverage_data_on_windows_file() {
+    when(fs.baseDir().getAbsolutePath()).thenReturn("D:/my-project/my-repo");
+    when(context.fileSystem().inputFile(context.fileSystem().predicates().hasPath(anyString()))).thenReturn(inputFile);
+
+    sensor.parseFile(getGcovFile("windows-path.gcov"), context);
+
+    verify(context, times(1)).newCoverage();
+    verify(newCoverage, times(1)).onFile(inputFile);
+    verify(newCoverage).lineHits(2, 7);
+    verify(newCoverage).lineHits(3, 0);
+    verify(newCoverage).conditions(2, 3, 1);
+    verify(newCoverage, times(1)).save();
+  }
+
+  @Test
+  public void should_not_save_coverage_data_on_non_existing_resource() {
+    when(fs.baseDir().getAbsolutePath()).thenReturn("fake");
     when(fs.inputFile(predicate)).thenReturn(null);
-    sensor.parseReport(getCoverageReport(), context);
+
+    sensor.parseFile(getGcovFile("windows-path.gcov"), context);
+
     verify(context, never()).newCoverage();
   }
 
+  // TODO: Could it really happen to pass null file?
   @Test
-  public void testForceExecute() throws URISyntaxException {
+  public void should_trigger_an_illegal_state_exception_when_null_file_is_passed_as_gcov_file_to_parse() {
+    exceptionRule.expect(IllegalStateException.class);
+    exceptionRule.expectMessage("Cannot parse Gcov report");
+
     when(context.fileSystem().inputFile(context.fileSystem().predicates().hasPath(anyString()))).thenReturn(inputFile);
-    sensor.defaultToTrue();
-    sensor.execute(context);
+
+    sensor.parseFile(null, context);
+  }
+
+  @Test
+  public void should_not_trigger_any_coverage_computation_as_gcov_file_is_invalid() {
+    when(context.fileSystem().inputFile(context.fileSystem().predicates().hasPath(anyString()))).thenReturn(inputFile);
+
+    sensor.parseFile(getGcovFile("badly-formatted.gcov"), context);
+
     verify(context, never()).newCoverage();
   }
 
 
   @Test
-  public void testBadReport() throws URISyntaxException {
+  // FIXME: 0 line coverage instead
+  public void should_not_trigger_any_coverage_computation_as_gcov_file_does_not_contain_line_coverage_data() {
+    when(fs.baseDir().getAbsolutePath()).thenReturn("D:/my-project/my-repo");
     when(context.fileSystem().inputFile(context.fileSystem().predicates().hasPath(anyString()))).thenReturn(inputFile);
-    sensor.parseReport(new File(getClass().getResource("/com/lintyservices/sonar/plugins/gcov/GcovSensorTests/bad-coverage.gcov").toURI()), context);
-    verify(context, never()).newCoverage();
-  }
 
-  @Test
-  public void testSlashPath() throws URISyntaxException {
-    when(context.fileSystem().inputFile(context.fileSystem().predicates().hasPath(anyString()))).thenReturn(inputFile);
-    sensor.parseReport(new File(getClass().getResource("/com/lintyservices/sonar/plugins/gcov/GcovSensorTests/slash-coverage.gcov").toURI()), context);
+    sensor.parseFile(getGcovFile("no-line-coverage.gcov"), context);
+
     verify(context, times(1)).newCoverage();
+    verify(newCoverage, times(1)).save();
   }
 
-  @Test
-  public void testVoidReport() throws URISyntaxException {
-    when(context.fileSystem().inputFile(context.fileSystem().predicates().hasPath(anyString()))).thenReturn(inputFile);
-    sensor.parseReport(null, context);
-    verify(context, never()).newCoverage();
-  }
-
-  @Test
-  public void testBadValueReport() throws URISyntaxException {
-    when(context.fileSystem().inputFile(context.fileSystem().predicates().hasPath(anyString()))).thenReturn(inputFile);
-    sensor.parseReport(new File(getClass().getResource("/com/lintyservices/sonar/plugins/gcov/GcovSensorTests/badvalue-coverage.gcov").toURI()), context);
-    verify(context, times(1)).newCoverage();
-  }
-
-  private File getCoverageReport() throws URISyntaxException {
-    return new File(getClass().getResource("/com/lintyservices/sonar/plugins/gcov/GcovSensorTests/commons-chain-coverage.gcov").toURI());
+  private File getGcovFile(String fileName) {
+    try {
+      return new File(getClass().getResource("/com/lintyservices/sonar/plugins/gcov/GcovSensorTest/" + fileName).toURI());
+    } catch (URISyntaxException e) {
+      throw new IllegalStateException("Cannot create test file", e);
+    }
   }
 
 }

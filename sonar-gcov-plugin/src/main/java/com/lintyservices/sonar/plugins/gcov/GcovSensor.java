@@ -28,20 +28,20 @@ import org.sonar.api.utils.log.Logger;
 import org.sonar.api.utils.log.Loggers;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class GcovSensor implements Sensor {
 
   private static final Logger LOG = Loggers.get(GcovSensor.class);
-  private static final String FALSESTRING = "false";
 
-  private FileSystem fs;
-  private Configuration configuration;
-  private String defaultEnable = FALSESTRING;
+  private final FileSystem fs;
+  private final Configuration configuration;
 
   public GcovSensor(FileSystem fs, Configuration configuration) {
     this.fs = fs;
@@ -55,36 +55,36 @@ public class GcovSensor implements Sensor {
 
   @Override
   public void execute(SensorContext context) {
-    String enable = configuration.get(GcovPlugin.ENABLE_COVERAGE).orElse(defaultEnable);
-    if (!enable.equalsIgnoreCase(FALSESTRING)) {
-      List<Path> paths = new ArrayList<>();
-      try {
-        Files.walk(Paths.get(fs.baseDir().getAbsolutePath())).filter(Files::isRegularFile).filter(o -> o.toString().toLowerCase().endsWith(".gcov")).forEach(o1 -> paths.add(o1));
-      } catch (Exception e) {
-        // FIXME: We should fail if no report can be found. Where are those reported located?
-        LOG.warn("Error while trying to get gcov reports");
-      }
-      for (Path path : paths) {
-        File report = path.toFile();
-        if (!report.isFile() || !report.exists() || !report.canRead()) {
-          // FIXME: On log per path?
-          LOG.warn("Gcov report not found at {}", report);
-        } else
-          parseReport(report, context);
+    String gcovEnabled = configuration.get(GcovPlugin.ENABLE_COVERAGE).orElse("false");
+    if (!gcovEnabled.equals("true")) {
+      LOG.info("[Gcov] Code coverage computation from Gcov is not activated on this project");
+      return;
+    }
+
+    List<Path> gcovReportPaths;
+    LOG.info("[Gcov] Retrieving list of Gcov report files");
+    try (Stream<Path> streamPaths = Files.walk(Paths.get(fs.baseDir().getAbsolutePath()))) {
+      gcovReportPaths = streamPaths
+        .filter(Files::isRegularFile)
+        .filter(o -> o.toString().toLowerCase().endsWith(".gcov"))
+        .collect(Collectors.toList());
+    } catch (IOException e) {
+      throw new IllegalStateException("[Gcov] Cannot retrieve list of Gcov report files", e);
+    }
+
+    for (Path gcovReportPath : gcovReportPaths) {
+      File gcovReportFile = gcovReportPath.toFile();
+      if (!gcovReportFile.isFile() || !gcovReportFile.exists() || !gcovReportFile.canRead()) {
+        LOG.warn("[Gcov] Gcov file cannot be processed: {}", gcovReportFile);
+      } else {
+        parseFile(gcovReportFile, context);
       }
     }
   }
 
-  public void parseReport(File file, SensorContext context) {
-    LOG.info("parsing {}", file);
-    GcovReportParser.parseReport(file, context);
-  }
-
-  public void defaultToTrue() {
-    this.defaultEnable = "true";
-  }
-
-  public void defaultToFalse() {
-    this.defaultEnable = FALSESTRING;
+  public void parseFile(File file, SensorContext context) {
+    LOG.info("[Gcov] Parsing Gcov file: {}", file);
+    GcovReportParser gcovParser = new GcovReportParser(context);
+    gcovParser.parseFile(file);
   }
 }
