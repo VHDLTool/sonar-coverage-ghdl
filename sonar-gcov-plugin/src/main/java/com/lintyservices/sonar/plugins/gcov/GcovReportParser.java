@@ -53,7 +53,7 @@ public class GcovReportParser {
         coverage.save();
       }
     } catch (Exception e) {
-      throw new IllegalStateException("Cannot parse Gcov report", e);
+      throw new IllegalStateException("[Gcov] Cannot parse Gcov report", e);
     }
   }
 

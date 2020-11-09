@@ -20,9 +20,7 @@
 package com.lintyservices.sonar.plugins.gcov;
 
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.sonar.api.batch.fs.FilePredicate;
 import org.sonar.api.batch.fs.FilePredicates;
@@ -37,6 +35,8 @@ import org.sonar.api.scan.filesystem.PathResolver;
 import java.io.File;
 import java.net.URISyntaxException;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.never;
@@ -49,9 +49,6 @@ public class GcovSensorTest {
 
   private GcovSensor sensor;
   private MapSettings settings;
-
-  @Rule
-  public ExpectedException exceptionRule = ExpectedException.none();
 
   @Mock
   private SensorContext context;
@@ -139,12 +136,10 @@ public class GcovSensorTest {
   // TODO: Could it really happen to pass null file?
   @Test
   public void should_trigger_an_illegal_state_exception_when_null_file_is_passed_as_gcov_file_to_parse() {
-    exceptionRule.expect(IllegalStateException.class);
-    exceptionRule.expectMessage("Cannot parse Gcov report");
-
     when(context.fileSystem().inputFile(context.fileSystem().predicates().hasPath(anyString()))).thenReturn(inputFile);
 
-    sensor.parseFile(null, context);
+    Exception thrown = assertThrows(IllegalStateException.class, () -> sensor.parseFile(null, context));
+    assertEquals("[Gcov] Cannot parse Gcov report", thrown.getMessage());
   }
 
   @Test
