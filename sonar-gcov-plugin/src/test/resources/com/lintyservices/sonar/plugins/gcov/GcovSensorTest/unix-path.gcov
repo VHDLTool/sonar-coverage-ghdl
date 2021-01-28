@@ -1,0 +1,8 @@
+        -:    0:Source:/my-project/my-repo/src/cpu/alu.vhd
+        -:    0:Object:alu.bb
+        -:    1:-------------------------------------------------------------------------------
+        7:    2:if
+        branch  0 never executed
+        branch  1 taken 100%
+		branch  2 taken 0% (fallthrough)
+        ####:    3:-- The Arithmetic Logic Unit (ALU).
