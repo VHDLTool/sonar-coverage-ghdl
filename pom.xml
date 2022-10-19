@@ -89,12 +89,12 @@
       <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>
-        <version>30.1.1-jre</version>
+        <version>31.1-jre</version>
       </dependency>
       <dependency>
         <groupId>org.sonarsource.orchestrator</groupId>
         <artifactId>sonar-orchestrator</artifactId>
-        <version>3.35.1.2719</version>
+        <version>3.37.0.87</version>
         <exclusions>
           <exclusion>
             <groupId>com.oracle</groupId>
@@ -123,7 +123,7 @@
       <dependency>
         <groupId>org.assertj</groupId>
         <artifactId>assertj-core</artifactId>
-        <version>3.19.0</version>
+        <version>3.23.1</version>
         <scope>test</scope>
       </dependency>
       <dependency>
