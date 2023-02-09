@@ -18,8 +18,7 @@ jobs:
     strategy:
       matrix:
         os: [ ubuntu-latest, windows-latest ]
-        sonarqube: [ 8.9.0.43852 ]
-        # sonarqube: [ 8.9.0.43852, 8.8.0.42792 ] # TODO: Move back to matrix when LTS != LATEST
+        sonarqube: [ 8.9.10.61524, 9.7.0.61563 ]
 
     steps:
       - name: Git Checkout
@@ -33,18 +32,18 @@ jobs:
           java-version: 11
 
       - name: Set Release Version ${{ github.event.inputs.release_version }}
-        if: github.event_name == 'workflow_dispatch' && matrix.os == 'ubuntu-latest' && matrix.sonarqube == '8.9.0.43852'
+        if: github.event_name == 'workflow_dispatch' && matrix.os == 'ubuntu-latest' && matrix.sonarqube == '8.9.10.61524'
         run: mvn -B versions:set -DnewVersion=${{ github.event.inputs.release_version }} -DgenerateBackupPoms=false
 
       - name: Build and Test against SonarQube ${{ matrix.sonarqube }}
         run: mvn -B clean verify -Pits -"Dsonar.runtimeVersion=${{ matrix.sonarqube }}"
 
       - name: Run SonarQube Analysis
-        if: contains(github.ref, 'master') && matrix.os == 'ubuntu-latest' && matrix.sonarqube == '8.9.0.43852'
+        if: contains(github.ref, 'main') && matrix.os == 'ubuntu-latest' && matrix.sonarqube == '8.9.10.61524'
         run: mvn -B sonar:sonar -Dsonar.login=${{ secrets.SONARQUBE_SCANNER_FOR_PRIVATE_REPOSITORIES_TOKEN }}
 
       - name: Upload Plugin JAR
-        if: matrix.os == 'ubuntu-latest' && matrix.sonarqube == '8.9.0.43852'
+        if: matrix.os == 'ubuntu-latest' && matrix.sonarqube == '8.9.10.61524'
         uses: actions/upload-artifact@v2
         with:
           name: plugin
@@ -53,7 +52,7 @@ jobs:
             !sonar-gcov-plugin/target/sonar-gcov-plugin-*-sources.jar
 
       - name: Commit, Push and Tag Release Version ${{ github.event.inputs.release_version }}
-        if: github.event_name == 'workflow_dispatch' && matrix.os == 'ubuntu-latest' && matrix.sonarqube == '8.9.0.43852'
+        if: github.event_name == 'workflow_dispatch' && matrix.os == 'ubuntu-latest' && matrix.sonarqube == '8.9.10.61524'
         uses: EndBug/add-and-commit@v5
         with:
           add: '*'
@@ -65,11 +64,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set Next Development Cycle Version ${{ github.event.inputs.next_version }}
-        if: github.event_name == 'workflow_dispatch' && matrix.os == 'ubuntu-latest' && matrix.sonarqube == '8.9.0.43852'
+        if: github.event_name == 'workflow_dispatch' && matrix.os == 'ubuntu-latest' && matrix.sonarqube == '8.9.10.61524'
         run: mvn -B versions:set -DnewVersion=${{ github.event.inputs.next_version }} -DgenerateBackupPoms=false
 
       - name: Commit and Push Next Development Cycle Version ${{ github.event.inputs.next_version }}
-        if: github.event_name == 'workflow_dispatch' && matrix.os == 'ubuntu-latest' && matrix.sonarqube == '8.9.0.43852'
+        if: github.event_name == 'workflow_dispatch' && matrix.os == 'ubuntu-latest' && matrix.sonarqube == '8.9.10.61524'
         uses: EndBug/add-and-commit@v5
         with:
           add: '*'
@@ -83,7 +82,7 @@ jobs:
     name: GitHub Pre-release
     runs-on: ubuntu-latest
     needs: build
-    if: contains(github.ref, 'master')
+    if: contains(github.ref, 'main')
     steps:
       - name: Download Plugin JAR
         uses: actions/download-artifact@v2
@@ -97,7 +96,7 @@ jobs:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           automatic_release_tag: "latest"
           prerelease: true
-          title: Latest build from master
+          title: Latest build from main
           files: sonar-gcov-plugin-latest.jar
 
   release:
