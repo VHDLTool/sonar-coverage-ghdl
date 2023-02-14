@@ -1,6 +1,6 @@
 /*
  * SonarQube Linty Gcov :: Plugin
- * Copyright (C) 2019-2021 Linty Services
+ * Copyright (C) 2019-2023 Linty Services
  * mailto:contact@linty-services.com
  *
  * This program is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class GcovPluginTest {
 
-  public static final Version LTS_VERSION = Version.create(7, 9);
+  public static final Version LTS_VERSION = Version.create(9, 9);
   private static final int EXTENSIONS = 2;
 
   @Test
