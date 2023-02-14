@@ -2,7 +2,7 @@
 
 ## Feature
 
-This plugin allows to import Gcov reports data in SonarQqube.
+This plugin allows to import Gcov reports data in SonarQube.
 Gcov reports can be obtained from VHDL files using ghdl-gcc.
 
 ## Build Plugin
