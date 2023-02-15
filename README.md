@@ -1,5 +1,8 @@
 # SonarQube Linty Gcov Plugin
 
+This plugin is now useless as this feature is available out-of-the-box from gcovr: https://gcovr.com/en/master/output/sonarqube.html
+
+
 ## Feature
 
 This plugin allows to import Gcov reports data in SonarQube.
