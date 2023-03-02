@@ -6,14 +6,14 @@
   <parent>
     <groupId>org.sonarsource.parent</groupId>
     <artifactId>parent</artifactId>
-    <version>59.0.29</version>
+    <version>65.0.218</version>
   </parent>
 
   <groupId>com.lintyservices.sonar.plugins.gcov</groupId>
   <artifactId>parent</artifactId>
   <packaging>pom</packaging>
   <name>SonarQube Linty Gcov</name>
-  <version>1.6.0-SNAPSHOT</version>
+  <version>1.7.0-SNAPSHOT</version>
   <description>Import Gcov code coverage reports</description>
   <url>https://www.linty-services.com</url>
 
@@ -26,7 +26,7 @@
   <properties>
     <license.owner>Linty Services</license.owner>
     <license.mailto>mailto:contact@linty-services.com</license.mailto>
-    <sonar.version>8.9.0.43852</sonar.version>
+    <sonar.version>9.9.0.65466</sonar.version>
     <sonar.host.url>https://sonar.linty-services.com</sonar.host.url>
   </properties>
 
@@ -88,7 +88,7 @@
       <dependency>
         <groupId>org.sonarsource.sonarqube</groupId>
         <artifactId>sonar-plugin-api</artifactId>
-        <version>${sonar.version}</version>
+        <version>9.4.0.54424</version>
         <scope>provided</scope>
       </dependency>
       <dependency>
@@ -99,7 +99,7 @@
       <dependency>
         <groupId>org.sonarsource.orchestrator</groupId>
         <artifactId>sonar-orchestrator</artifactId>
-        <version>3.39.0.143</version>
+        <version>3.40.0.183</version>
         <exclusions>
           <exclusion>
             <groupId>com.oracle</groupId>
@@ -122,13 +122,13 @@
       <dependency>
         <groupId>org.assertj</groupId>
         <artifactId>assertj-core</artifactId>
-        <version>3.23.1</version>
+        <version>3.24.2</version>
         <scope>test</scope>
       </dependency>
       <dependency>
         <groupId>org.mockito</groupId>
         <artifactId>mockito-core</artifactId>
-        <version>4.8.0</version>
+        <version>5.1.1</version>
         <scope>test</scope>
       </dependency>
     </dependencies>
@@ -140,7 +140,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-enforcer-plugin</artifactId>
-          <version>3.1.0</version>
+          <version>3.2.1</version>
           <executions>
             <execution>
               <id>enforce-versions</id>
@@ -166,7 +166,7 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.10.1</version>
         <configuration>
-          <release>11</release>
+          <release>17</release>
           <encoding>UTF-8</encoding>
         </configuration>
       </plugin>
